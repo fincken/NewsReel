@@ -5,3 +5,6 @@
 
 # Maven output folder
 target/
+
+# Log files
+*.log
