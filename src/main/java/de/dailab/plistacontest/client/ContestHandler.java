@@ -20,6 +20,7 @@ package de.dailab.plistacontest.client;
 
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -99,15 +100,18 @@ public class ContestHandler extends AbstractHandler {
 
 				// handle the normal messages - since we do not know the exact format, we try to be flexible
 				String typeMessage = _breq.getParameter("type");
+				if (typeMessage.equals("prediction")) {
+					logger.info("Recieved the prediction message back from the evaluator, why..?");
+					return;
+				}
 				String bodyMessage = _breq.getParameter("body");
 				String propertyMessage = _breq.getParameter("properties");
 				String entityMessage = _breq.getParameter("entities");
 
 				String responseText = "";
-				
 				// handle idomaar messages
 				if (bodyMessage == null || bodyMessage.length() == 0) {
-				
+
 					// we may recode the body message
 					if (_breq.getContentType().equals("application/x-www-form-urlencoded; charset=utf-8")) {
 						bodyMessage = URLDecoder.decode(bodyMessage,"utf-8");
@@ -239,7 +243,7 @@ public class ContestHandler extends AbstractHandler {
 			final String _jsonMessageBody) {
 
 		// write all data from the server to a file
-		logger.info(messageType + "\t" + _jsonMessageBody);
+//		logger.info(messageType + "\t" + _jsonMessageBody);
 
 		// create an jSON object from the String
 		final JSONObject jObj = (JSONObject) JSONValue.parse(_jsonMessageBody);
@@ -252,14 +256,19 @@ public class ContestHandler extends AbstractHandler {
 		// in a complex if/switch statement we handle the differentTypes of
 		// messages
 		if ("item_update".equalsIgnoreCase(messageType)) {
-
 			// we extract itemID, domainID, text and the timeTime, create/update
 			final RecommenderItem recommenderItem = RecommenderItem
 					.parseItemUpdate(_jsonMessageBody);
 
 			// we mark this information in the article table
 			if (recommenderItem.getItemID() != null) {
-				recommenderItemTable.handleItemUpdate(recommenderItem);
+//				recommenderItemTable.handleItemUpdate(recommenderItem);
+				if (contestRecommender instanceof Recommender) {
+					((Recommender) contestRecommender).addNewsArticle(
+							new NewsArticle(recommenderItem.getItemID(), recommenderItem.getDomainID(),
+									recommenderItem.getTitle(), recommenderItem.getText(),
+									recommenderItem.getRecommendable()));
+				}
 			}
 
 			response = ";item_update successfull";
@@ -273,7 +282,11 @@ public class ContestHandler extends AbstractHandler {
 				RecommenderItem currentRequest = RecommenderItem.parseRecommendationRequest(_jsonMessageBody);
 
 				// gather the items to be recommended
-				List<Long> resultList = recommenderItemTable.getLastItems(currentRequest);
+//				List<Long> resultList = recommenderItemTable.getLastItems(currentRequest);
+				List<Long> resultList = new ArrayList<Long>();
+				if (contestRecommender instanceof Recommender) {
+					resultList = ((Recommender) contestRecommender).recommend(currentRequest);
+				}
 				if (resultList == null) {
 					response = "[]";
 					System.out.println("invalid resultList");
@@ -281,7 +294,9 @@ public class ContestHandler extends AbstractHandler {
 					response = resultList.toString();
 				}
 				response = getRecommendationResultJSON(response);
-
+				if (resultList.size() < currentRequest.getNumberOfRequestedResults()) {
+					logger.info("Sent too few recs");
+				}
 				// TODO? might handle the the request as impressions
 			} catch (Throwable t) {
 				t.printStackTrace();
@@ -305,7 +320,9 @@ public class ContestHandler extends AbstractHandler {
 				}
 				// click refers to recommendations clicked by the user
 			} else if ("click".equalsIgnoreCase(eventNotificationType)) {
-
+				if (contestRecommender instanceof Recommender) {
+					((Recommender) contestRecommender).userReadArticle(item);
+				}
 				response = "handle click eventNotification successful";
 
 			} else {

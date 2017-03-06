@@ -44,7 +44,7 @@ public class RecommenderItem {
 		@Override
 		protected SimpleDateFormat initialValue() {
 			// the Date pattern used by plista
-			return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+			return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		}
 	};
 
@@ -60,6 +60,7 @@ public class RecommenderItem {
 	public static final Integer NOTIFICATION_TYPE_ID = 12;
 	public static final Integer NUMBER_DISPLAYED_AS_REC_ID = 13;
 	public static final Integer LIST_OF_DISPLAYED_RECS_ID = 14;
+	public static final Integer ITEM_TITLE_ID = 15;
 	// /////////////////////////////////////////////////////////////////////////////////////////
 
 	/** the JSON content, might be null */
@@ -305,6 +306,14 @@ public class RecommenderItem {
 	public List<Long> getListOfDisplayedRecs() {
 		return (List<Long>) this.valuesByID.get(LIST_OF_DISPLAYED_RECS_ID);
 	}
+	
+	public String getTitle() {
+		return (String) valuesByID.get(ITEM_TITLE_ID);
+	}
+	
+	public void setTitle(String title) {
+		valuesByID.put(ITEM_TITLE_ID, title);
+	}
 
 	/**
 	 * Getter for general values. Use the static members as key.
@@ -335,6 +344,7 @@ public class RecommenderItem {
 			}
 			String domainID = jsonObj.get("domainid") + "";
 			String text = jsonObj.get("text") + "";
+			String title = jsonObj.get("title") + "";
 			String flag = jsonObj.get("flag") + "";
 			boolean recommendable = ("0".equals(flag));
 			
@@ -358,6 +368,7 @@ public class RecommenderItem {
 			RecommenderItem result = new RecommenderItem(null /* userID */,	Long.valueOf(itemID), Long.valueOf(domainID), created);
 			result.setText(text);
 			result.setRecommendable(recommendable);
+			result.setTitle(title);
 			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
