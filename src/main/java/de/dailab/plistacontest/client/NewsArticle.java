@@ -1,19 +1,41 @@
 package de.dailab.plistacontest.client;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 public class NewsArticle {
 	
 	private Long id;
 	private Long publisherId;
-	private String title;
-	private String description;
+	
+	/**
+	 * Category id. Note that a category id of 0 most likely represents an unknown category.
+	 */
+	private Long categoryId;
 	private boolean recommendable;
 	
-	public NewsArticle(Long id, Long publisherId, String title, String description, boolean recommendable) {
+	/**
+	 * The counts of the keywords of this article's description concatenated with
+	 * it's title.
+	 */
+	private Map<String, Integer> keywords;
+	
+	/**
+	 * A list of word frequencies of this article, according to the global list of words.
+	 */
+	private List<Integer> frequencyList;
+	
+	public NewsArticle(Long id, Long publisherId, Long categoryId, String title,
+												String description, boolean recommendable) {
 		this.id = id;
 		this.publisherId = publisherId;
-		this.title = title;
-		this.description = description;
+		this.categoryId = categoryId;
 		this.recommendable = recommendable;
+		
+		this.frequencyList = new ArrayList<Integer>();
+		this.keywords = LanguageProcessor.getKeywordMap(description + " " + title);
 	}
 
 	public Long getId() {
@@ -23,17 +45,39 @@ public class NewsArticle {
 	public Long getPublisherId() {
 		return publisherId;
 	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public String getDescription() {
-		return description;
+	
+	public Long getCategoryId() {
+		return categoryId;
 	}
 
 	public boolean isRecommendable() {
 		return recommendable;
+	}
+	
+	public Set<String> getKeywords() {
+		return keywords.keySet();
+	}
+	
+	public void computeFrequencyList(List<String> words) {
+		List<Integer> frequencies = new ArrayList<Integer>();
+		for (String word : words) {
+			frequencies.add(keywords.containsKey(word) ? keywords.get(word) : 0);
+		}
+		frequencyList = frequencies;
+	}
+	
+	/**
+	 * Pad the frequency list with zeroes.
+	 * @param n - the number of zeroes to pad with
+	 */
+	public void padFrequencyList(int n) {
+		for (int i = 0; i < n; i++) {
+			frequencyList.add(0);
+		}
+	}
+	
+	public List<Integer> getFrequencyList() {
+		return frequencyList;
 	}
 	
 }

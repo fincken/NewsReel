@@ -265,7 +265,9 @@ public class ContestHandler extends AbstractHandler {
 //				recommenderItemTable.handleItemUpdate(recommenderItem);
 				if (contestRecommender instanceof Recommender) {
 					((Recommender) contestRecommender).addNewsArticle(
-							new NewsArticle(recommenderItem.getItemID(), recommenderItem.getDomainID(),
+							new NewsArticle(recommenderItem.getItemID(),
+									recommenderItem.getCategoryId(),
+									recommenderItem.getDomainID(),
 									recommenderItem.getTitle(), recommenderItem.getText(),
 									recommenderItem.getRecommendable()));
 				}

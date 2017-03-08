@@ -61,6 +61,7 @@ public class RecommenderItem {
 	public static final Integer NUMBER_DISPLAYED_AS_REC_ID = 13;
 	public static final Integer LIST_OF_DISPLAYED_RECS_ID = 14;
 	public static final Integer ITEM_TITLE_ID = 15;
+	public static final Integer ITEM_CATEGORY_ID = 16;
 	// /////////////////////////////////////////////////////////////////////////////////////////
 
 	/** the JSON content, might be null */
@@ -314,6 +315,14 @@ public class RecommenderItem {
 	public void setTitle(String title) {
 		valuesByID.put(ITEM_TITLE_ID, title);
 	}
+	
+	public Long getCategoryId() {
+		return (Long) valuesByID.get(ITEM_CATEGORY_ID);
+	}
+	
+	public void setCategoryId(Long categoryId) {
+		valuesByID.put(ITEM_CATEGORY_ID, categoryId);
+	}
 
 	/**
 	 * Getter for general values. Use the static members as key.
@@ -345,6 +354,7 @@ public class RecommenderItem {
 			String domainID = jsonObj.get("domainid") + "";
 			String text = jsonObj.get("text") + "";
 			String title = jsonObj.get("title") + "";
+			String categoryId = jsonObj.get("categoryid") + "";
 			String flag = jsonObj.get("flag") + "";
 			boolean recommendable = ("0".equals(flag));
 			
@@ -369,6 +379,7 @@ public class RecommenderItem {
 			result.setText(text);
 			result.setRecommendable(recommendable);
 			result.setTitle(title);
+			result.setCategoryId(categoryId.equals("null") ? 0 : Long.valueOf(categoryId));
 			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
