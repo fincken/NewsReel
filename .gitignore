@@ -7,4 +7,4 @@
 target/
 
 # Log files
-*.log*
+logs

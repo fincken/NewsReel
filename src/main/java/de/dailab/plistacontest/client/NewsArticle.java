@@ -1,6 +1,7 @@
 package de.dailab.plistacontest.client;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,15 +28,17 @@ public class NewsArticle {
 	 */
 	private List<Integer> frequencyList;
 	
-	public NewsArticle(Long id, Long publisherId, Long categoryId, String title,
-												String description, boolean recommendable) {
+	private static final LanguageProcessor languageProcessor = LanguageProcessor.INSTANCE;
+	
+	public NewsArticle(Long id, Long publisherId, Long categoryId, String text,
+															boolean recommendable) {
 		this.id = id;
 		this.publisherId = publisherId;
 		this.categoryId = categoryId;
 		this.recommendable = recommendable;
 		
 		this.frequencyList = new ArrayList<Integer>();
-		this.keywords = LanguageProcessor.getKeywordMap(description + " " + title);
+		this.keywords = languageProcessor.getKeywordMap(text);
 	}
 
 	public Long getId() {
@@ -58,7 +61,7 @@ public class NewsArticle {
 		return keywords.keySet();
 	}
 	
-	public void computeFrequencyList(List<String> words) {
+	public void computeFrequencyList(Collection<String> words) {
 		List<Integer> frequencies = new ArrayList<Integer>();
 		for (String word : words) {
 			frequencies.add(keywords.containsKey(word) ? keywords.get(word) : 0);

@@ -55,10 +55,6 @@ public class ContestHandler extends AbstractHandler {
 	 */
 	private final RecommenderItemTable recommenderItemTable = new RecommenderItemTable();
 
-	/**
-	 * Define the default recommender, currently not used.
-	 */
-	@SuppressWarnings("unused")
 	private Object contestRecommender;
 
 	/**
@@ -242,9 +238,6 @@ public class ContestHandler extends AbstractHandler {
 	private String handleTraditionalMessage(final String messageType,
 			final String _jsonMessageBody) {
 
-		// write all data from the server to a file
-//		logger.info(messageType + "\t" + _jsonMessageBody);
-
 		// create an jSON object from the String
 		final JSONObject jObj = (JSONObject) JSONValue.parse(_jsonMessageBody);
 
@@ -262,13 +255,13 @@ public class ContestHandler extends AbstractHandler {
 
 			// we mark this information in the article table
 			if (recommenderItem.getItemID() != null) {
-//				recommenderItemTable.handleItemUpdate(recommenderItem);
 				if (contestRecommender instanceof Recommender) {
 					((Recommender) contestRecommender).addNewsArticle(
 							new NewsArticle(recommenderItem.getItemID(),
 									recommenderItem.getCategoryId(),
 									recommenderItem.getDomainID(),
-									recommenderItem.getTitle(), recommenderItem.getText(),
+									recommenderItem.getTitle() + " " + recommenderItem.getText()
+									+ " " + recommenderItem.getKicker(),
 									recommenderItem.getRecommendable()));
 				}
 			}
@@ -284,7 +277,6 @@ public class ContestHandler extends AbstractHandler {
 				RecommenderItem currentRequest = RecommenderItem.parseRecommendationRequest(_jsonMessageBody);
 
 				// gather the items to be recommended
-//				List<Long> resultList = recommenderItemTable.getLastItems(currentRequest);
 				List<Long> resultList = new ArrayList<Long>();
 				if (contestRecommender instanceof Recommender) {
 					resultList = ((Recommender) contestRecommender).recommend(currentRequest);

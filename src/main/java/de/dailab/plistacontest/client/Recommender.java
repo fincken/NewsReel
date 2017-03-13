@@ -4,8 +4,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -35,7 +37,7 @@ public class Recommender {
 	/**
 	 * The keywords the system knows about. Used to compute cosine similarities between articles.
 	 */
-	private List<String> words;
+	private Collection<String> words;
 	
 	/**
 	 * All the articles read by a user. Stored as a map that maps from the user ID to a set of
@@ -54,8 +56,10 @@ public class Recommender {
 	 */
 	private Map<Long, Set<NewsArticle>> recommendedToUser;
 	
-	private final static Logger logger = LoggerFactory.getLogger(Recommender.class);
+	private static final LanguageProcessor languageProcessor = LanguageProcessor.INSTANCE;
 	
+	private static final Logger logger = LoggerFactory.getLogger(Recommender.class);
+		
 	public Recommender() {
 		// initialize data structures
 		newsArticles = new ArrayList<NewsArticle>();
@@ -63,14 +67,22 @@ public class Recommender {
 		newsArticleById = new HashMap<Long, NewsArticle>();
 		userPublisherPreferences = new HashMap<Long, Set<Long>>();
 		newsArticlesByPublisher = new HashMap<Long, Set<NewsArticle>>();
-		words = new ArrayList<String>();
+		words = new LinkedHashSet<String>();
 		
 		// load the stop words of the language processor
 		try {
-			LanguageProcessor.loadStopWordsFromFile(new FileInputStream("stop_words.txt"));
+			languageProcessor.loadStopWordsFromFile(new FileInputStream("stop_words.txt"));
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public List<NewsArticle> getNewsArticles() {
+		return new ArrayList<NewsArticle>(newsArticles);
+	}
+	
+	public Collection<String> getWords() {
+		return new LinkedHashSet<String>(words);
 	}
 	
 	/**
@@ -103,8 +115,8 @@ public class Recommender {
 			}
 		}
 		
-		if (newsArticles.size() > 30) {
-			logger.info("Global list of words is {}", words);
+		if (newsArticles.size() > 35) {
+			logger.info("Global word list is: {}", words);
 		}
 		
 		// compute the frequency list of the new article
@@ -186,8 +198,7 @@ public class Recommender {
 		
 		// check if the system knows anything about the user's preferences
 		// note that a user id of 0 indicates an unknown user
-		boolean userInSystem = requestUserId != 0 &&
-										userPublisherPreferences.containsKey(requestUserId);
+		boolean userInSystem = userPublisherPreferences.containsKey(requestUserId);
 		
 		List<NewsArticle> recommendations; // recommended articles goes here
 		// ids are extracted before returning them
@@ -199,7 +210,7 @@ public class Recommender {
 			List<NewsArticle> matches = new ArrayList<NewsArticle>();
 			// this might end up empty, which is why it is stored in a separate list
 			
-			// first, go through publisher preferences
+			// go through publisher preferences
 			for (Long publisherId : userPublisherPreferences.get(requestUserId)) {
 				if (newsArticlesByPublisher.containsKey(publisherId)) {
 					for (NewsArticle article : newsArticlesByPublisher.get(publisherId)) {
@@ -208,7 +219,7 @@ public class Recommender {
 				}
 			}
 			
-			// next, check if the system knows about any articles the user has read
+			// check if the system knows about any articles the user has read
 			if (readByUser.containsKey(requestUserId)) {
 				logger.info("System got a request from a known user, computing cosines...");
 				for (NewsArticle article : readByUser.get(requestUserId)) {
@@ -283,7 +294,7 @@ public class Recommender {
 	}
 	
 	/**
-	 * Extract IDs from articles.
+	 * Extracts IDs from articles.
 	 * @param articles - the articles to extract the IDs from
 	 * @return The IDs of the articles
 	 */

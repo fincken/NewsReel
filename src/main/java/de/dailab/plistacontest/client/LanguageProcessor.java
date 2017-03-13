@@ -21,18 +21,20 @@ import org.slf4j.LoggerFactory;
  * @author Tobias
  *
  */
-public class LanguageProcessor {
+public enum LanguageProcessor {
+	
+	INSTANCE;
 	
 	private static Set<String> stopWords = new HashSet<String>();
 	
-	private final static Logger logger = LoggerFactory.getLogger(LanguageProcessor.class);
+	private static final Logger logger = LoggerFactory.getLogger(LanguageProcessor.class);
 	
 	/**
 	 * Get the clean words from a text.
 	 * @param text - the text to clean
 	 * @return
 	 */
-	public static List<String> getWords(String text) {
+	public List<String> getWords(String text) {
 		List<String> words = new ArrayList<String>();
 		String[] tokens = text.split(" ");
 		for (String token : tokens) {
@@ -45,7 +47,12 @@ public class LanguageProcessor {
 		return words;
 	}
 	
-	public static void loadStopWordsFromFile(InputStream inputStream) {
+	public void loadStopWordsFromFile(InputStream inputStream) {
+		stopWords.clear();
+		if (inputStream == null) {
+			return;
+		}
+		
 		BufferedReader br = null;
 		
 		try {
@@ -66,11 +73,10 @@ public class LanguageProcessor {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		logger.info("Stop words are {}", stopWords);
 	}
 	
-	public static Set<String> getStopWords() {
-		return stopWords;
+	public Set<String> getStopWords() {
+		return new HashSet<String>(stopWords);
 	}
 
 	/**
@@ -78,12 +84,11 @@ public class LanguageProcessor {
 	 * @param word
 	 * @return
 	 */
-	public static String getClean(String word) {
-		// TODO: look at getting rid of "s
-		return word.replaceAll("[\u00ad\\p{Punct}]", "").trim();
+	public String getClean(String word) {
+		return word.replaceAll("[^\\p{L}]", "").trim();
 	}
 	
-	public static Map<String, Integer> getKeywordMap(String text) {
+	public Map<String, Integer> getKeywordMap(String text) {
 		Map<String, Integer> keywords = new HashMap<String, Integer>();
 		for (String word : getWords(text)) {
 			keywords.put(word, keywords.containsKey(word) ?

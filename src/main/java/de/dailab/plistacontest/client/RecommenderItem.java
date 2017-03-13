@@ -62,6 +62,7 @@ public class RecommenderItem {
 	public static final Integer LIST_OF_DISPLAYED_RECS_ID = 14;
 	public static final Integer ITEM_TITLE_ID = 15;
 	public static final Integer ITEM_CATEGORY_ID = 16;
+	public static final Integer ITEM_KICKER_ID = 17;
 	// /////////////////////////////////////////////////////////////////////////////////////////
 
 	/** the JSON content, might be null */
@@ -323,6 +324,14 @@ public class RecommenderItem {
 	public void setCategoryId(Long categoryId) {
 		valuesByID.put(ITEM_CATEGORY_ID, categoryId);
 	}
+	
+	public String getKicker() {
+		return (String) valuesByID.get(ITEM_KICKER_ID);
+	}
+	
+	public void setKicker(String kicker) {
+		valuesByID.put(ITEM_KICKER_ID, kicker);
+	}
 
 	/**
 	 * Getter for general values. Use the static members as key.
@@ -355,8 +364,10 @@ public class RecommenderItem {
 			String text = jsonObj.get("text") + "";
 			String title = jsonObj.get("title") + "";
 			String categoryId = jsonObj.get("categoryid") + "";
+			String kicker = jsonObj.get("kicker") + "";
 			String flag = jsonObj.get("flag") + "";
-			boolean recommendable = ("0".equals(flag));
+			String kind = jsonObj.get("kind") + "";
+			boolean recommendable = !kind.equals("picture") && "0".equals(flag);
 			
 			// parse date, now is default
 			String createdAt = jsonObj.get("created_at") + "";
@@ -380,6 +391,7 @@ public class RecommenderItem {
 			result.setRecommendable(recommendable);
 			result.setTitle(title);
 			result.setCategoryId(categoryId.equals("null") ? 0 : Long.valueOf(categoryId));
+			result.setKicker(kicker.equals("null") ? "" : kicker);
 			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
