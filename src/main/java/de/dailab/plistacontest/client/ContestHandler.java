@@ -279,7 +279,8 @@ public class ContestHandler extends AbstractHandler {
 				// gather the items to be recommended
 				List<Long> resultList = new ArrayList<Long>();
 				if (contestRecommender instanceof Recommender) {
-					resultList = ((Recommender) contestRecommender).recommend(currentRequest);
+					resultList = ((Recommender) contestRecommender).recommend(currentRequest.getUserID(),
+															currentRequest.getNumberOfRequestedResults());
 				}
 				if (resultList == null) {
 					response = "[]";
@@ -315,7 +316,9 @@ public class ContestHandler extends AbstractHandler {
 				// click refers to recommendations clicked by the user
 			} else if ("click".equalsIgnoreCase(eventNotificationType)) {
 				if (contestRecommender instanceof Recommender) {
-					((Recommender) contestRecommender).userReadArticle(item);
+					((Recommender) contestRecommender).userReadArticle(item.getUserID(),
+													item.getListOfDisplayedRecs().get(0),
+													item.getDomainID());
 				}
 				response = "handle click eventNotification successful";
 

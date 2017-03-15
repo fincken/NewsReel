@@ -2,6 +2,7 @@ package de.dailab.plistacontest.client;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,16 +30,21 @@ public class NewsArticle {
 	private List<Integer> frequencyList;
 	
 	private static final LanguageProcessor languageProcessor = LanguageProcessor.INSTANCE;
-	
+		
 	public NewsArticle(Long id, Long publisherId, Long categoryId, String text,
 															boolean recommendable) {
 		this.id = id;
 		this.publisherId = publisherId;
 		this.categoryId = categoryId;
 		this.recommendable = recommendable;
+	
+		frequencyList = new ArrayList<Integer>();
+		keywords = languageProcessor.getKeywordMap(text);
 		
-		this.frequencyList = new ArrayList<Integer>();
-		this.keywords = languageProcessor.getKeywordMap(text);
+		keywords.put("<publisherId>" + publisherId, 1);
+		if (categoryId != 0) {
+			keywords.put("<categoryId>" + categoryId, 1);
+		}
 	}
 
 	public Long getId() {
@@ -58,19 +64,22 @@ public class NewsArticle {
 	}
 	
 	public Set<String> getKeywords() {
-		return keywords.keySet();
-	}
-	
-	public void computeFrequencyList(Collection<String> words) {
-		List<Integer> frequencies = new ArrayList<Integer>();
-		for (String word : words) {
-			frequencies.add(keywords.containsKey(word) ? keywords.get(word) : 0);
-		}
-		frequencyList = frequencies;
+		return new HashSet<String>(keywords.keySet());
 	}
 	
 	/**
-	 * Pad the frequency list with zeroes.
+	 * Computes the frequency list of this article in accordance with some list of words.
+	 * @param words - list of words from which to compute the frequency list
+	 */
+	public void computeFrequencyList(Collection<String> words) {
+		frequencyList.clear();
+		for (String word : words) {
+			frequencyList.add(keywords.containsKey(word) ? keywords.get(word) : 0);
+		}
+	}
+	
+	/**
+	 * Pads the frequency list with zeroes.
 	 * @param n - the number of zeroes to pad with
 	 */
 	public void padFrequencyList(int n) {
@@ -80,7 +89,7 @@ public class NewsArticle {
 	}
 	
 	public List<Integer> getFrequencyList() {
-		return frequencyList;
+		return new ArrayList<Integer>(frequencyList);
 	}
 	
 }
