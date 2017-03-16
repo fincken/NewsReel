@@ -15,6 +15,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import opennlp.tools.stemmer.snowball.SnowballStemmer;
+
 /**
  * Utility class for basic language processing. Assumes that the recommender wants all
  * lower case words, and that the stop words file is encoded with UTF-8.
@@ -29,6 +31,8 @@ public enum LanguageProcessor {
 	
 	private static final Logger logger = LoggerFactory.getLogger(LanguageProcessor.class);
 	
+	SnowballStemmer stemmer = new SnowballStemmer(SnowballStemmer.ALGORITHM.GERMAN);
+	
 	/**
 	 * Get the clean words from a text.
 	 * @param text - the text to clean
@@ -41,7 +45,7 @@ public enum LanguageProcessor {
 			String clean = getClean(token);
 			if (clean.length() > 1 &&
 					(stopWords.isEmpty() || !stopWords.contains(clean.toLowerCase()))) {
-				words.add(clean.toLowerCase());
+				words.add(stemmer.stem(clean.toLowerCase()).toString());
 			}
 		}
 		return words;

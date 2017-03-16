@@ -16,7 +16,7 @@ public class NewsArticleTest {
 				new NewsArticle(50L, 20L, 10L, "Yes We are all in this together", true);
 		
 		List<String> words = new ArrayList<String>(Arrays.asList("we", "are", "all",
-															"in", "this", "together", "yes"));
+															"in", "this", "togeth", "yes"));
 		article.computeFrequencyList(words);
 		assertEquals("[1, 1, 1, 1, 1, 1, 1]", article.getFrequencyList().toString());
 		

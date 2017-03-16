@@ -41,7 +41,10 @@ public class NewsArticle {
 		frequencyList = new ArrayList<Integer>();
 		keywords = languageProcessor.getKeywordMap(text);
 		
-		keywords.put("<publisherId>" + publisherId, 1);
+		// also include publisher and category ids as words
+		if (publisherId != 0) {
+			keywords.put("<publisherId>" + publisherId, 1);
+		}
 		if (categoryId != 0) {
 			keywords.put("<categoryId>" + categoryId, 1);
 		}

@@ -23,8 +23,7 @@ public class RecommenderTest {
 		recommender.addNewsArticle(article1);
 		
 		assertTrue(recommender.getNewsArticles().contains(article1));
-		
-		String text1 = "frankie goes to hollywood frank underwood travelled to today";
+		String text1 = "franki goes to hollywood frank underwood travelled to today";
 		for (String word : text1.split(" ")) {
 			assertTrue(recommender.getWords().contains(word));
 		}
