@@ -33,7 +33,6 @@ public class RecommenderTest {
 		recommender.addNewsArticle(article2);
 		
 		assertTrue(recommender.getNewsArticles().contains(article2));
-		assertEquals(16, article1.getFrequencyList().size());
 				
 		String text2 = "but black dog is cool";
 		for (String word : text2.split(" ")) {
@@ -45,13 +44,13 @@ public class RecommenderTest {
 	public void testRecommend_withPreviousRecord() {
 		// create test articles
 		NewsArticle article1 = new NewsArticle(1L, 1L, 1L,
-				"messi barcelona madrid ronaldo champions league 2017 guardiola", true);
-		NewsArticle article2 = new NewsArticle(2L, 1L, 1L,
-				"messi barcelona valencia liga 2016", true);
-		NewsArticle article3 = new NewsArticle(3L, 3L, 2L,
-				"madonna radio hollywood truck", true);
-		NewsArticle article4 = new NewsArticle(4L, 4L, 2L,
-				"madonna radio hollywood barcelona", true);
+				"messi ronaldo madrid barcelona", true);
+		NewsArticle article2 = new NewsArticle(2L, 1L, 2L,
+				"dylan barcelona guitar audience", true);
+		NewsArticle article3 = new NewsArticle(3L, 2L, 1L,
+				"messi ronaldo madrid spain", true);
+		NewsArticle article4 = new NewsArticle(4L, 2L, 3L,
+				"trump usa election obama", true);
 		
 		// add articles to system
 		recommender.addNewsArticle(article1);
@@ -60,13 +59,13 @@ public class RecommenderTest {
 		recommender.addNewsArticle(article4);
 		
 		// simulate that user 1 read article 1
-		recommender.userReadArticle(1L, 1L, 1L);
+		recommender.userReadArticle(1L, 1L);
 		
 		// get recommendations for user 1		
-		assertEquals("[2, 4, 3]", recommender.recommend(1L, 3).toString());
+		assertEquals("[3, 2, 4]", recommender.recommend(1L, 3).toString());
 		
 		// request more articles than available
-		assertEquals("[2, 4, 3]", recommender.recommend(1L, 10).toString());
+		assertEquals("[3, 2, 4]", recommender.recommend(1L, 10).toString());
 	}
 
 }

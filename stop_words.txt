@@ -44,6 +44,8 @@ es
 euer
 eure
 für
+hab
+hat
 hatte
 hatten
 hattest
@@ -69,6 +71,7 @@ kann
 kannst
 können
 könnt
+macht
 machen
 mein
 meine

@@ -1,13 +1,10 @@
 package de.dailab.plistacontest.client;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,18 +31,27 @@ public enum LanguageProcessor {
 	SnowballStemmer stemmer = new SnowballStemmer(SnowballStemmer.ALGORITHM.GERMAN);
 	
 	/**
-	 * Get the clean words from a text.
-	 * @param text - the text to clean
-	 * @return
+	 * Returns a list of clean, stemmed words from a text. Starts with performing tokenization
+	 * (assumes text with words separated by single spaces). Each token (word) is cleaned
+	 * (according to the getClean() method), converted to lower case, and checked against a set of
+	 * stop words to ignore. If the word is not a stop word, it is stemmed before it is added to
+	 * the final list.
+	 * @param text - text to clean
+	 * @return a list of clean, stemmed words
 	 */
 	public List<String> getWords(String text) {
 		List<String> words = new ArrayList<String>();
 		String[] tokens = text.split(" ");
 		for (String token : tokens) {
 			String clean = getClean(token);
-			if (clean.length() > 1 &&
-					(stopWords.isEmpty() || !stopWords.contains(clean.toLowerCase()))) {
-				words.add(stemmer.stem(clean.toLowerCase()).toString());
+			if (clean.length() > 1) {
+				String allLowerCase = clean.toLowerCase();
+				if (stopWords.isEmpty() || !stopWords.contains(allLowerCase)) {
+					String stemmed = stemmer.stem(allLowerCase).toString();
+					if (stopWords.isEmpty() || !stopWords.contains(stemmed)) {
+						words.add(stemmed);
+					}
+				}
 			}
 		}
 		return words;
@@ -53,29 +59,8 @@ public enum LanguageProcessor {
 	
 	public void loadStopWordsFromFile(InputStream inputStream) {
 		stopWords.clear();
-		if (inputStream == null) {
-			return;
-		}
-		
-		BufferedReader br = null;
-		
-		try {
-			br = new BufferedReader(new InputStreamReader(inputStream, "utf-8"));
-		} catch (UnsupportedEncodingException ue) {
-			ue.printStackTrace();
-			br = new BufferedReader(new InputStreamReader(inputStream));
-		}
-		
-		String line; // lines read from file go here
-		try {
-			while ((line = br.readLine()) != null) {
-				stopWords.add(line);
-			}
-			if (br != null) {
-				br.close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (inputStream != null) {
+			stopWords.addAll(Util.loadData(inputStream));
 		}
 	}
 	
@@ -93,7 +78,7 @@ public enum LanguageProcessor {
 	}
 	
 	public Map<String, Integer> getKeywordMap(String text) {
-		Map<String, Integer> keywords = new HashMap<String, Integer>();
+		Map<String, Integer> keywords = new LinkedHashMap<String, Integer>();
 		for (String word : getWords(text)) {
 			keywords.put(word, keywords.containsKey(word) ?
 					keywords.get(word) + 1 : 1);

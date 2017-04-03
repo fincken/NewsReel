@@ -9,10 +9,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -24,6 +24,8 @@ public class Recommender implements Comparator<NewsArticle> {
 	 * All the news articles in the system.
 	 */
 	private List<NewsArticle> newsArticles;
+	
+	private Map<NewsArticle, List<Double>> articleTermFrequencies;
 	
 	/**
 	 * ArticleId -> Article map for quick look up. Used primarily when the system needs
@@ -37,9 +39,10 @@ public class Recommender implements Comparator<NewsArticle> {
 	private Map<Long, Set<NewsArticle>> newsArticlesByPublisher;
 	
 	/**
-	 * The keywords the system knows about. Used to compute cosine similarities between articles.
+	 * Map that maps from the keywords in the system to the number of documents in which the 
+	 * word occurs.
 	 */
-	private Collection<String> words;
+	private Map<String, Integer> words;
 	
 	/**
 	 * All the articles read by a user. Stored as a map that maps from the user ID to a set of
@@ -47,11 +50,8 @@ public class Recommender implements Comparator<NewsArticle> {
 	 */
 	private Map<Long, Set<NewsArticle>> readByUser;
 	
-	/**
-	 * UserId -> all known publisher id preferences for user with id = UserId.
-	 */
-	private Map<Long, Set<Long>> userPublisherPreferences;
-	
+	private Map<Long, Set<Long>> readByUserIdOnly;
+		
 	/**
 	 * UserId -> articles recommended over the course of the system's lifetime. Will be used to
 	 * avoid recommending the same articles repeatedly. 
@@ -69,9 +69,10 @@ public class Recommender implements Comparator<NewsArticle> {
 		newsArticles = new ArrayList<NewsArticle>();
 		readByUser = new HashMap<Long, Set<NewsArticle>>();
 		newsArticleById = new HashMap<Long, NewsArticle>();
-		userPublisherPreferences = new HashMap<Long, Set<Long>>();
 		newsArticlesByPublisher = new HashMap<Long, Set<NewsArticle>>();
-		words = new LinkedHashSet<String>();
+		words = new LinkedHashMap<String, Integer>();
+		readByUserIdOnly = new HashMap<Long, Set<Long>>();
+		articleTermFrequencies = new HashMap<NewsArticle, List<Double>>();
 		
 		// load the stop words of the language processor
 		try {
@@ -86,9 +87,9 @@ public class Recommender implements Comparator<NewsArticle> {
 	}
 	
 	public Collection<String> getWords() {
-		return new LinkedHashSet<String>(words);
+		return new LinkedHashSet<String>(words.keySet());
 	}
-	
+		
 	/**
 	 * Adds a news article to the system. Removes any existing reference to the article if
 	 * necessary. Maintains the global word list with any new words from the article.
@@ -116,23 +117,19 @@ public class Recommender implements Comparator<NewsArticle> {
 		newsArticleById.put(id, newsArticle);
 		
 		// add the words from the article to the global list of words
-		for (String word : newsArticle.getKeywords()) {
-			if (!words.contains(word)) {
-				words.add(word);
-			}
+		for (String word : newsArticle.getKeywords().keySet()) {
+			words.put(word, words.containsKey(word) ? words.get(word) + 1 : 1);
 		}
-		
-		if (newsArticles.size() > 35) {
-			logger.info("Global word list is: {}", words);
+				
+		// compute the term frequency lists
+		for (NewsArticle article : newsArticles) {
+			articleTermFrequencies.put(article, computeTermFrequencyList(article));
 		}
-		
-		// compute the frequency list of the new article
-		newsArticle.computeFrequencyList(words);
 		
 		// pad the frequency lists of all the articles now so they are ready when a
 		// recommendation request arrives
-		for (NewsArticle article : newsArticles) {
-			article.padFrequencyList(words.size() - article.getFrequencyList().size());
+		for (List<Double> frequencyList : articleTermFrequencies.values()) {
+			padFrequencyList(frequencyList, words.size() - frequencyList.size());
 		}
 		
 		// put it in the publisherId -> Set<Article> map for easy lookup later
@@ -144,6 +141,7 @@ public class Recommender implements Comparator<NewsArticle> {
 		}
 	}
 	
+
 	/**
 	 * Registers that a user has clicked on a recommendation, and read an article.
 	 * Maintains a UserId -> Set<Article> map that is used to build user profiles.
@@ -151,22 +149,18 @@ public class Recommender implements Comparator<NewsArticle> {
 	 * @param articleId - id of the read article
 	 * @param publisherId - id of the publisher of the read article
 	 */
-	public void userReadArticle(Long userId, Long articleId, Long publisherId) {
-		// TODO: look at context keywords?
-		
-		// ignore the click if the user is unknown to the system
+	public void userReadArticle(Long userId, Long articleId) {		
+		// ignore the click if the user is unknown to the data provider
 		if (userId == 0) {
 			return;
 		}
-		
+				
 		// since the system only receives the id of the read article, try to gain
 		// more information by finding the actual article object. Note that this might not
 		// exist in the system.
 		
 		// check if the system knows about the article
-		if (newsArticleById.containsKey(articleId)) {
-			logger.info("User {} read article {} that is in the system", userId, articleId);
-			
+		if (newsArticleById.containsKey(articleId)) {			
 			// look up the article from it's id
 			NewsArticle article = newsArticleById.get(articleId);
 			
@@ -178,13 +172,16 @@ public class Recommender implements Comparator<NewsArticle> {
 				// register with new list
 				readByUser.put(userId, new HashSet<NewsArticle>(Arrays.asList(article)));
 			}
-		}
-		// register publisher preferences
-		if (userPublisherPreferences.containsKey(userId)) {
-			userPublisherPreferences.get(userId).add(publisherId);
 		} else {
-			userPublisherPreferences.put(userId,
-										new HashSet<Long>(Arrays.asList(publisherId)));
+			// all the system has is the id of the article
+			// TODO: look at context keywords?
+			// TODO: use collaborative filtering?
+			
+			if (readByUserIdOnly.containsKey(userId)) {
+				readByUserIdOnly.get(userId).add(articleId);
+			} else {
+				readByUserIdOnly.put(userId, new HashSet<Long>(Arrays.asList(articleId)));
+			}
 		}
 	}
 	
@@ -208,32 +205,9 @@ public class Recommender implements Comparator<NewsArticle> {
 			
 			// TODO: look at the most popular categories and/or publishers?
 			
-			if (newsArticles.size() > limit) {
-				recommendations = getNRandomArticles(newsArticles, limit);
-			} else {
-				recommendations = newsArticles;
-			}
+			recommendations = Util.getNRandomElements(newsArticles, limit);
 		}
 		return getArticleIds(recommendations);
-	}
-	
-	/**
-	 * Returns n random, unique articles from a list of articles.
-	 * @param articles - articles to pick from
-	 * @param n - number of articles
-	 * @return List of n random, unique articles from articles
-	 */
-	private List<NewsArticle> getNRandomArticles(List<NewsArticle> articles, int n) {
-		List<NewsArticle> result = new ArrayList<NewsArticle>();
-		Random rand = new Random();
-		while (result.size() < n) {
-			int idx = rand.nextInt(articles.size());
-			while (result.contains(articles.get(idx))) {
-				idx = rand.nextInt(articles.size());
-			}
-			result.add(articles.get(idx));
-		}
-		return result;
 	}
 	
 	private List<NewsArticle> recommendKArticles(Long userId, int k) {
@@ -244,11 +218,7 @@ public class Recommender implements Comparator<NewsArticle> {
 		for (NewsArticle article : readByActiveUser) {
 			candidates.remove(article);
 		}
-		
-		// TODO: filter candidates? It may very well be naive and inefficient to look at all
-		// articles, since most articles will have a cos. sim. of 0 anyways.
-		// Implement straightforward thresholding?
-		
+				
 		// sort the candidates in descending order according to average cosine similarity
 		// to articles read by user
 		Collections.sort(candidates, this);
@@ -256,6 +226,36 @@ public class Recommender implements Comparator<NewsArticle> {
 		return candidates.subList(0, Math.min(candidates.size(), k));
 	}
 	
+	private double getIdf(String term) {
+		double result = 0;
+		if (words.containsKey(term)) {
+			result = Math.log((double) newsArticles.size() / words.get(term));
+		}
+		return result;
+	}
+	
+	private void padFrequencyList(List<Double> frequencyList, int n) {
+		for (int i = 0; i < n; i++) {
+			frequencyList.add(0.0);
+		}
+	}
+
+	private List<Double> computeTermFrequencyList(NewsArticle newsArticle) {
+		List<Double> frequencies = new ArrayList<Double>();
+		for (String word : words.keySet()) {
+			double normalized = 0;
+			if (newsArticle.getKeywords().containsKey(word)) {
+				normalized = dampen(newsArticle.getKeywords().get(word)) * getIdf(word);
+			}
+			frequencies.add(normalized);
+		}
+		return frequencies;
+	}
+
+	private double dampen(int integer) {
+		return (double) integer;
+	}
+
 	/**
 	 * Calculates the average similarity of an article compared to the articles read by the
 	 * current active user. This assumes that the articles read by the active user has already
@@ -266,8 +266,8 @@ public class Recommender implements Comparator<NewsArticle> {
 	private double predictRating(NewsArticle article) {
 		double sum = 0;
 		for (NewsArticle readArticle : readByActiveUser) {
-			sum += Util.cosineSimilarity(article.getFrequencyList(),
-					readArticle.getFrequencyList());
+			sum += Util.cosineSimilarity(articleTermFrequencies.get(article),
+					articleTermFrequencies.get(readArticle));
 		}
 		return sum / readByActiveUser.size();
 	}

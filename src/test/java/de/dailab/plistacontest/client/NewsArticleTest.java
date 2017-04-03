@@ -17,12 +17,7 @@ public class NewsArticleTest {
 		
 		List<String> words = new ArrayList<String>(Arrays.asList("we", "are", "all",
 															"in", "this", "togeth", "yes"));
-		article.computeFrequencyList(words);
-		assertEquals("[1, 1, 1, 1, 1, 1, 1]", article.getFrequencyList().toString());
-		
-		words.add("boga");
-		article.computeFrequencyList(words);
-		assertEquals("[1, 1, 1, 1, 1, 1, 1, 0]", article.getFrequencyList().toString());
+
 	}
 	
 }

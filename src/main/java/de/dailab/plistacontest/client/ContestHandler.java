@@ -97,7 +97,6 @@ public class ContestHandler extends AbstractHandler {
 				// handle the normal messages - since we do not know the exact format, we try to be flexible
 				String typeMessage = _breq.getParameter("type");
 				if (typeMessage.equals("prediction")) {
-					logger.info("Recieved the prediction message back from the evaluator, why..?");
 					return;
 				}
 				String bodyMessage = _breq.getParameter("body");
@@ -258,8 +257,8 @@ public class ContestHandler extends AbstractHandler {
 				if (contestRecommender instanceof Recommender) {
 					((Recommender) contestRecommender).addNewsArticle(
 							new NewsArticle(recommenderItem.getItemID(),
-									recommenderItem.getCategoryId(),
 									recommenderItem.getDomainID(),
+									recommenderItem.getCategoryId(),
 									recommenderItem.getTitle() + " " + recommenderItem.getText()
 									+ " " + recommenderItem.getKicker(),
 									recommenderItem.getRecommendable()));
@@ -317,8 +316,7 @@ public class ContestHandler extends AbstractHandler {
 			} else if ("click".equalsIgnoreCase(eventNotificationType)) {
 				if (contestRecommender instanceof Recommender) {
 					((Recommender) contestRecommender).userReadArticle(item.getUserID(),
-													item.getListOfDisplayedRecs().get(0),
-													item.getDomainID());
+													item.getListOfDisplayedRecs().get(0));
 				}
 				response = "handle click eventNotification successful";
 
