@@ -13,6 +13,7 @@ public class NewsArticle {
 	 */
 	private Long categoryId;
 	private boolean recommendable;
+	private String text;
 	
 	/**
 	 * The counts of the keywords of this article's description concatenated with
@@ -28,16 +29,9 @@ public class NewsArticle {
 		this.publisherId = publisherId;
 		this.categoryId = categoryId;
 		this.recommendable = recommendable;
+		this.text = text;
 	
-		keywords = languageProcessor.getKeywordMap(text);
-		
-		// also include publisher and category ids as words
-		if (publisherId != 0) {
-			keywords.put("<publisherId>" + publisherId, 1);
-		}
-		if (categoryId != 0) {
-			keywords.put("<categoryId>" + categoryId, 1);
-		}
+		updateKeywords();
 	}
 
 	public Long getId() {
@@ -60,9 +54,42 @@ public class NewsArticle {
 		return new LinkedHashMap<String, Integer>(keywords);
 	}
 	
+	public String getText() {
+		return text;
+	}
+	
+	public void setPublisherId(Long publisherId) {
+		this.publisherId = publisherId;
+	}
+
+	public void setCategoryId(Long categoryId) {
+		this.categoryId = categoryId;
+	}
+
+	public void setRecommendable(boolean recommendable) {
+		this.recommendable = recommendable;
+	}
+
+	public void setText(String text) {
+		this.text = text;
+		updateKeywords();
+	}
+	
+	private void updateKeywords() {
+		keywords = languageProcessor.getKeywordMap(text);
+		
+		// also include publisher and category ids as words
+		if (publisherId != 0) {
+			keywords.put("<publisherId>" + publisherId, 1);
+		}
+		if (categoryId != 0) {
+			keywords.put("<categoryId>" + categoryId, 1);
+		}
+	}
+
 	@Override
 	public String toString() {
-		return "[NewsArticle id=" + id + "]";
+		return "[NewsArticle id=" + id + ", text=" + text + "]";
 	}
 
 }

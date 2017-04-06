@@ -67,5 +67,26 @@ public class RecommenderTest {
 		// request more articles than available
 		assertEquals("[3, 2, 4]", recommender.recommend(1L, 10).toString());
 	}
+	
+	@Test
+	public void testUpdateArticle_withPreExistingArticle() {
+		NewsArticle originalArticle = new NewsArticle(1L, 1L, 1L, "halla", true);
+		recommender.addNewsArticle(originalArticle);
+		
+		// user 1 reads article 1
+		recommender.userReadArticle(1L, originalArticle.getId());
+		
+		// change the article
+		recommender.updateExistingArticle(originalArticle.getId(),
+				originalArticle.getPublisherId(),
+				originalArticle.getCategoryId(),
+				"hade",
+				originalArticle.isRecommendable());
+		
+		assertEquals("hade", recommender.getNewsArticles().get(0).getText());
+
+		Object[] readByUser1 = recommender.getReadByUser().get(1L).toArray();
+		assertEquals("hade", ((NewsArticle) readByUser1[0]).getText());
+	}
 
 }

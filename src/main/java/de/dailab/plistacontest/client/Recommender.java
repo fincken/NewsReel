@@ -82,6 +82,10 @@ public class Recommender implements Comparator<NewsArticle> {
 		}
 	}
 	
+	public Map<Long, Set<NewsArticle>> getReadByUser() {
+		return new HashMap<Long, Set<NewsArticle>>(readByUser);
+	}
+	
 	public List<NewsArticle> getNewsArticles() {
 		return new ArrayList<NewsArticle>(newsArticles);
 	}
@@ -105,12 +109,21 @@ public class Recommender implements Comparator<NewsArticle> {
 		// TODO: store categoryId -> set of articles?
 		
 		// check if the article already exists in the system
-		if (newsArticleById.containsKey(id)) {
-			// if it does, simply remove the old reference
-			// it will be a different article object in memory, but with a matching id
-			logger.info("Updating existing article {}", id);
-			newsArticles.remove(newsArticleById.get(id));
-		}
+//		if (newsArticleById.containsKey(id)) {
+//			NewsArticle old = newsArticleById.get(id);
+//			// if it does, simply remove the old reference
+//			// it will be a different article object in memory, but with a matching id
+//			logger.info("Updating existing article {}", id);
+//			newsArticles.remove(old);
+//			
+//			// update the article in the sets mapped to 
+//			for (Set<NewsArticle> read : readByUser.values()) {
+//				if (read.contains(old)) {
+//					read.remove(old);
+//					read.add(newsArticle);
+//				}
+//			}
+//		}
 		
 		// add the article to the system
 		newsArticles.add(newsArticle);
@@ -306,6 +319,19 @@ public class Recommender implements Comparator<NewsArticle> {
 			diff = 0;
 		}
 		return diff;
+	}
+
+	public boolean hasArticleId(Long itemID) {
+		return newsArticleById.containsKey(itemID);
+	}
+
+	public void updateExistingArticle(Long id, Long publisherId, Long categoryId, String text,
+			Boolean recommendable) {
+		NewsArticle articleToUpdate = newsArticleById.get(id);
+		articleToUpdate.setPublisherId(publisherId);
+		articleToUpdate.setCategoryId(categoryId);
+		articleToUpdate.setText(text);
+		articleToUpdate.setRecommendable(recommendable);
 	}
 
 }

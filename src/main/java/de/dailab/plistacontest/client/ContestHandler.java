@@ -255,13 +255,25 @@ public class ContestHandler extends AbstractHandler {
 			// we mark this information in the article table
 			if (recommenderItem.getItemID() != null) {
 				if (contestRecommender instanceof Recommender) {
-					((Recommender) contestRecommender).addNewsArticle(
-							new NewsArticle(recommenderItem.getItemID(),
-									recommenderItem.getDomainID(),
-									recommenderItem.getCategoryId(),
-									recommenderItem.getTitle() + " " + recommenderItem.getText()
-									+ " " + recommenderItem.getKicker(),
-									recommenderItem.getRecommendable()));
+					// cast to known recommender
+					Recommender recommender = (Recommender) contestRecommender;
+					
+					if (recommender.hasArticleId(recommenderItem.getItemID())) {
+						recommender.updateExistingArticle(recommenderItem.getItemID(),
+								recommenderItem.getDomainID(),
+								recommenderItem.getCategoryId(),
+								recommenderItem.getTitle() + " " + recommenderItem.getText()
+								+ " " + recommenderItem.getKicker(),
+								recommenderItem.getRecommendable());
+					} else {
+						recommender.addNewsArticle(
+								new NewsArticle(recommenderItem.getItemID(),
+										recommenderItem.getDomainID(),
+										recommenderItem.getCategoryId(),
+										recommenderItem.getTitle() + " " + recommenderItem.getText()
+										+ " " + recommenderItem.getKicker(),
+										recommenderItem.getRecommendable()));		
+					}
 				}
 			}
 
